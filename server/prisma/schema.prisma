@@ -14,32 +14,52 @@ model User {
   password  String
   createdAt DateTime @default(now())
 
-  resumes   Resume[]
+  resumes Resume[]
 }
 
 model Resume {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   title        String
   originalName String
   fileUrl      String
-  atsScore     Float?
-  uploadedAt   DateTime  @default(now())
 
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetRole   String?
+  atsScore     Float?
+  aiStatus     String   @default("Pending")
+
+  uploadedAt   DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   analyses Analysis[]
 }
 
 model Analysis {
-  id               String   @id @default(cuid())
-  overallScore     Float?
-  strengths        String
-  weaknesses       String
-  suggestions      String
-  missingKeywords  String
-  jobMatch         Float?
-  createdAt        DateTime @default(now())
+  id String @id @default(cuid())
+
+  // Target role used during analysis
+  targetRole String?
+
+  // Main scores
+  overallScore Float?
+  jobMatch     Float?
+
+  // Detailed AI score breakdown
+  keywordMatch        Float?
+  technicalSkills     Float?
+  experienceRelevance Float?
+  projectRelevance    Float?
+  resumeStructure     Float?
+
+  // AI-generated explanation
+  strengths       String
+  weaknesses      String
+  suggestions     String
+  missingKeywords String
+
+  createdAt DateTime @default(now())
 
   resumeId String
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
