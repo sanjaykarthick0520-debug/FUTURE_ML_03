@@ -22,6 +22,7 @@ import {
   FolderKanban,
   LayoutList,
   Download,
+  Sparkles,
 } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 import { jsPDF } from "jspdf";
@@ -86,6 +87,91 @@ function formatDate(value) {
   if (!value) return "Not available";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "Not available" : date.toLocaleString();
+}
+
+function getCareerAlignmentStyle(alignment) {
+  const value = String(alignment || "").toLowerCase();
+
+  if (value.includes("strong")) {
+    return {
+      label: "Strong Match",
+      className: "text-emerald-300",
+      bgClass: "bg-emerald-500/10",
+      borderClass: "border-emerald-500/20",
+      description:
+        "The predicted career category aligns well with the selected target role.",
+    };
+  }
+
+  if (value.includes("moderate")) {
+    return {
+      label: "Moderate Match",
+      className: "text-yellow-300",
+      bgClass: "bg-yellow-500/10",
+      borderClass: "border-yellow-500/20",
+      description:
+        "The predicted career category has some alignment with the selected target role.",
+    };
+  }
+
+  return {
+    label: "Low Match",
+    className: "text-red-300",
+    bgClass: "bg-red-500/10",
+    borderClass: "border-red-500/20",
+    description:
+      "The predicted career category has limited alignment with the selected target role.",
+  };
+}
+
+function getCareerAlignment(predictedCategory, targetRole) {
+  const category = String(predictedCategory || "").toLowerCase().trim();
+  const role = String(targetRole || "").toLowerCase().trim();
+
+  if (!category || !role) return null;
+
+  const categoryKeywords = {
+    "information-technology": [
+      "software", "developer", "engineer", "programmer", "frontend",
+      "backend", "full stack", "fullstack", "web", "mobile", "devops",
+      "data scientist", "machine learning", "ai", "cyber", "cloud",
+      "network", "database", "technical", "it"
+    ],
+    "engineering": [
+      "engineer", "engineering", "mechanical", "civil", "electrical",
+      "electronics", "automotive", "production", "manufacturing"
+    ],
+    "banking": [
+      "bank", "banking", "finance", "financial", "credit", "loan",
+      "investment", "accountant", "accounting", "risk"
+    ],
+    "teacher": [
+      "teacher", "teaching", "education", "educator", "professor",
+      "lecturer", "trainer", "academic"
+    ],
+    "aviation": [
+      "aviation", "pilot", "airline", "airport", "flight", "cabin",
+      "aerospace", "aircraft"
+    ],
+    "consultant": [
+      "consultant", "consulting", "business analyst", "strategy",
+      "management", "advisor", "advisory"
+    ],
+    "chef": [
+      "chef", "culinary", "cook", "kitchen", "restaurant", "food"
+    ],
+  };
+
+  const keywords = categoryKeywords[category] || [];
+  const directCategoryMatch =
+    role.includes(category.replace(/-/g, " ")) ||
+    category.split("-").some((part) => part.length > 2 && role.includes(part));
+
+  const matchedKeywords = keywords.filter((keyword) => role.includes(keyword));
+
+  if (directCategoryMatch || matchedKeywords.length >= 2) return "Strong Match";
+  if (matchedKeywords.length === 1) return "Moderate Match";
+  return "Low Match";
 }
 
 /* =========================================================
@@ -366,6 +452,8 @@ function downloadAnalysisReport({ resume, analysis, scores }) {
   const info = [
     ["File Name", resume.originalName || "Not specified"],
     ["Target Role", resume.targetRole || "Not specified"],
+    ["ML Predicted Category", resume.predictedCategory || "Not available"],
+    ["Career Alignment", getCareerAlignment(resume.predictedCategory, resume.targetRole) || "Not available"],
     ["Uploaded On", formatDate(resume.uploadedAt)],
   ];
 
@@ -512,6 +600,15 @@ export default function Analysis() {
     scores.overallScore
   );
   const matchStatus = getScoreStatus(scores.jobMatch);
+
+  const careerAlignment = useMemo(
+    () =>
+      getCareerAlignment(
+        resume?.predictedCategory,
+        resume?.targetRole
+      ),
+    [resume?.predictedCategory, resume?.targetRole]
+  );
 
   const scoreGap = Math.round(
     Math.abs(scores.overallScore - scores.jobMatch)
@@ -751,6 +848,90 @@ export default function Analysis() {
                 <h3 className="text-xl md:text-2xl font-bold text-white mt-1 break-words">
                   {resume.targetRole}
                 </h3>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ML Career Prediction + Career Alignment */}
+        {resume.predictedCategory && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-4 relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-500/[0.08] via-white/[0.025] to-indigo-500/[0.06] p-5 md:p-6"
+          >
+            <div className="absolute -right-20 -top-24 w-52 h-52 rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
+
+            <div className="relative">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={20} className="text-violet-400 shrink-0" />
+                    <p className="text-sm uppercase tracking-wider text-zinc-500 font-semibold">
+                      ML Career Prediction
+                    </p>
+                  </div>
+
+                  <p className="text-xs uppercase tracking-wider text-zinc-600 font-medium mt-4">
+                    Predicted Category
+                  </p>
+
+                  <h3 className="text-xl md:text-2xl font-black text-violet-300 mt-1 break-words">
+                    {resume.predictedCategory}
+                  </h3>
+
+
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-3 shrink-0">
+
+                  {resume.targetRole && (
+                    <span className="inline-flex items-center justify-center px-3 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-bold">
+                      Target: {resume.targetRole}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-5 pt-5 border-t border-white/10">
+                {(() => {
+                  const alignment = getCareerAlignmentStyle(
+                    careerAlignment
+                  );
+
+                  return (
+                    <div
+                      className={`rounded-xl border ${alignment.borderClass} ${alignment.bgClass} p-4`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-lg ${alignment.bgClass} border ${alignment.borderClass} flex items-center justify-center`}
+                          >
+                            <Target size={19} className={alignment.className} />
+                          </div>
+
+                          <div>
+                            <p className="text-xs uppercase tracking-wider text-zinc-500 font-semibold">
+                              Career Alignment
+                            </p>
+
+                            <p
+                              className={`text-lg font-black mt-0.5 ${alignment.className}`}
+                            >
+                              {careerAlignment || "Not available"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-sm text-zinc-400 sm:text-right max-w-xl">
+                          {alignment.description}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </motion.div>
@@ -1085,7 +1266,7 @@ export default function Analysis() {
                 </h3>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-5 mt-6">
+              <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
                 <InfoBox
                   label="File Name"
                   value={resume.originalName}
@@ -1097,16 +1278,35 @@ export default function Analysis() {
                   valueClass="text-violet-300"
                 />
 
-                <div className="bg-black/20 rounded-xl p-5">
+                <InfoBox
+                  label="ML Predicted Category"
+                  value={resume.predictedCategory || "Not available"}
+                  valueClass="text-cyan-300"
+                />
+
+                <InfoBox
+                  label="Career Alignment"
+                  value={careerAlignment || "Not available"}
+                  valueClass={
+                    String(careerAlignment || "")
+                      .toLowerCase()
+                      .includes("strong")
+                      ? "text-emerald-300"
+                      : String(careerAlignment || "")
+                          .toLowerCase()
+                          .includes("moderate")
+                      ? "text-yellow-300"
+                      : "text-red-300"
+                  }
+                />
+
+                <div className="bg-black/20 rounded-xl p-5 md:col-span-2 xl:col-span-4">
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-zinc-500">
                       Uploaded On
                     </p>
 
-                    <CalendarDays
-                      size={15}
-                      className="text-zinc-500"
-                    />
+                    <CalendarDays size={15} className="text-zinc-500" />
                   </div>
 
                   <p className="font-semibold mt-2">

@@ -765,6 +765,40 @@ export default function Dashboard() {
                         </span>
                       </div>
 
+                      {/* ML Predicted Category */}
+                      <div className="relative mt-3 rounded-xl bg-violet-500/[0.045] border border-violet-400/10 p-3.5">
+                        <div className="flex items-center gap-2">
+                          <Sparkles
+                            size={16}
+                            className="text-violet-400 shrink-0"
+                          />
+
+                          <span className="text-xs uppercase tracking-wider text-zinc-500">
+                            ML Career Prediction
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 mt-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] uppercase tracking-wider text-zinc-600">
+                              Predicted Category
+                            </p>
+
+                            <p
+                              className="text-sm font-bold text-violet-300 truncate mt-0.5"
+                              title={
+                                resume.predictedCategory ||
+                                "Prediction unavailable"
+                              }
+                            >
+                              {resume.predictedCategory ||
+                                "Prediction unavailable"}
+                            </p>
+                          </div>
+
+                        </div>
+                      </div>
+
                       {/* Actions */}
                       <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5 pt-5 border-t border-white/5">
                         <div className="flex items-center gap-1">

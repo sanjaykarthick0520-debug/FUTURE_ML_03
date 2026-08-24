@@ -43,6 +43,10 @@ server/src/uploads/*
 
 *.log
 
+# Python bytecode and cache directories
+__pycache__/
+*.py[cod]
+
 
 # ==============================
 # OS files
